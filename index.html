@@ -368,11 +368,12 @@ async function reserver(id){
 
   // Toujours ajouter une nouvelle réservation (cumul possible)
   f.reservations.push({ directeur: dir, nb, at: new Date().toISOString() });
+  const total = f.reservations.filter(r => r.directeur === dir).reduce((s,r) => s+r.nb, 0);
   const ok = await pushDB();
   if (ok){
+    // Recharger depuis le cloud pour que tout le monde voie le même état
+    try { await fetchDB(); } catch(e) {}
     renderSlots();
-    // Calcul du total réservé par ce district sur ce créneau
-    const total = f.reservations.filter(r => r.directeur === dir).reduce((s,r) => s+r.nb, 0);
     showNotif('dir', '✓ ' + nb + ' place' + (nb>1?'s':'') + ' ajoutée' + (nb>1?'s':'') + ' pour ' + dir + ' (total : ' + total + ' place' + (total>1?'s':'') + ')', 'success');
   } else {
     f.reservations.pop();
