@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formations Foot Locker — Réservation</title>
+<style>
+  :root {
+    --blue: #2563eb; --blue-light: #eff6ff; --blue-mid: #bfdbfe;
+    --green: #16a34a; --green-light: #f0fdf4;
+    --amber: #d97706; --amber-light: #fffbeb;
+    --red: #dc2626; --red-light: #fef2f2;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-400: #9ca3af; --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  header { background: #fff; border-bottom: 1px solid var(--gray-200); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 10; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 34px; height: 34px; background: var(--gray-900); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: -1px; }
+  .logo-text { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+  .logo-sub { font-size: 12px; color: var(--gray-500); }
+  .tab-nav { display: flex; gap: 2px; background: var(--gray-100); padding: 3px; border-radius: 8px; }
+  .tab-btn { padding: 6px 14px; border: none; background: none; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--gray-500); cursor: pointer; transition: all 0.15s; }
+  .tab-btn.active { background: #fff; color: var(--gray-900); box-shadow: var(--shadow); }
+
+  main { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+  .notif { display: none; padding: 12px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; margin-bottom: 1rem; align-items: center; gap: 8px; }
+  .notif.show { display: flex; }
+  .notif.success { background: var(--green-light); color: var(--green); border: 1px solid #bbf7d0; }
+  .notif.error { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
+
+  .card { background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .formation-title { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+  .formation-type-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; background: var(--blue-light); color: var(--blue); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; margin-left: 8px; }
+
+  .meta-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-500); margin-bottom: 5px; }
+  .meta-row svg { flex-shrink: 0; }
+
+  .progress-wrap { margin: 12px 0 6px; }
+  .progress-bar { height: 6px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-500); margin-top: 5px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .badge.green { background: var(--green-light); color: var(--green); }
+  .badge.amber { background: var(--amber-light); color: var(--amber); }
+  .badge.red { background: var(--red-light); color: var(--red); }
+
+  .resa-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-100); }
+  .resa-row input[type=number] { width: 70px; padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 14px; text-align: center; color: var(--gray-900); background: #fff; }
+  .resa-row .nb-label { font-size: 13px; color: var(--gray-500); white-space: nowrap; }
+  .btn-reserver { flex: 1; padding: 9px 16px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn-reserver:hover { background: #1d4ed8; }
+  .btn-reserver:disabled { background: var(--gray-400); cursor: not-allowed; }
+  .complet-msg { color: var(--red); font-size: 13px; font-weight: 500; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--gray-100); }
+
+  .dir-select-wrap { margin-bottom: 1.25rem; }
+  .dir-select-wrap label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-700); margin-bottom: 6px; }
+  select, input[type=text], input[type=date], input[type=time], input[type=number].form-input { width: 100%; padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 14px; color: var(--gray-900); background: #fff; appearance: none; -webkit-appearance: none; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  select:focus, input:focus { outline: 2px solid var(--blue); border-color: transparent; }
+
+  .admin-section-title { font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-700); margin-bottom: 5px; }
+  .btn-add { width: 100%; padding: 10px; background: var(--gray-900); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+  .btn-add:hover { background: var(--gray-700); }
+  .btn-add:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+  .resa-admin-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .resa-admin-item:last-child { border: none; }
+  .resa-admin-name { font-size: 14px; font-weight: 500; }
+  .resa-admin-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .btn-del { background: none; border: 1px solid var(--gray-200); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--gray-500); cursor: pointer; }
+  .btn-del:hover { background: var(--red-light); color: var(--red); border-color: #fecaca; }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--gray-400); }
+  .empty-icon { font-size: 40px; display: block; margin-bottom: 10px; }
+  .empty p { font-size: 14px; }
+
+  .pw-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .pw-box { background: #fff; border-radius: 16px; padding: 2rem; width: 300px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .pw-box h2 { font-size: 18px; margin-bottom: 8px; }
+  .pw-box p { font-size: 13px; color: var(--gray-500); margin-bottom: 16px; }
+  .pw-box input { margin-bottom: 12px; }
+  .pw-box .btn-add { margin: 0; }
+  .pw-err { color: var(--red); font-size: 12px; margin-top: 8px; }
+
+  .link-box { background: var(--blue-light); border: 1px solid var(--blue-mid); border-radius: 10px; padding: 12px 14px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .link-box span { font-size: 12px; color: var(--blue); word-break: break-all; flex: 1; }
+  .btn-copy { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+  @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } header { padding: 0 1rem; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">FL</div>
+    <div>
+      <div class="logo-text">Formations Foot Locker</div>
+      <div class="logo-sub">Réservation de créneaux</div>
+    </div>
+  </div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('directeur', this)">Réserver</button>
+    <button class="tab-btn" onclick="switchTab('admin', this)">Admin</button>
+  </div>
+</header>
+
+<div id="pw-overlay" class="pw-overlay" style="display:none">
+  <div class="pw-box">
+    <h2>🔒 Accès admin</h2>
+    <p>Entrez le mot de passe pour accéder à la gestion des formations.</p>
+    <input type="password" id="pw-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn-add" onclick="checkPw()">Accéder</button>
+    <div class="pw-err" id="pw-err"></div>
+  </div>
+</div>
+
+<main>
+  <div id="view-directeur">
+    <div id="notif-dir" class="notif"></div>
+    <div class="dir-select-wrap">
+      <label>Votre identité</label>
+      <select id="dir-name">
+        <option value="">— Sélectionnez votre district —</option>
+        <option>District 330</option>
+        <option>District 331</option>
+        <option>District 337</option>
+        <option>District 338</option>
+        <option>Siège</option>
+      </select>
+    </div>
+    <div id="slots-list"></div>
+  </div>
+
+  <div id="view-admin" style="display:none">
+    <div id="notif-admin" class="notif"></div>
+    <div class="card">
+      <div class="admin-section-title">📤 Lien à envoyer aux directeurs</div>
+      <div class="link-box">
+        <span id="share-link">—</span>
+        <button class="btn-copy" onclick="copyLink()">Copier</button>
+      </div>
+      <p style="font-size:12px;color:var(--gray-500)">Partagez ce lien par email ou WhatsApp.</p>
+    </div>
+
+    <div class="card">
+      <div class="admin-section-title">➕ Nouvelle formation</div>
+      <div class="field">
+        <label>Type de formation</label>
+        <select id="f-type">
+          <option>MAC SST + INCENDIE</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+        <div class="field"><label>Heure</label><input type="time" id="f-time" value="09:00"></div>
+      </div>
+      <div class="field"><label>Nom du lieu</label><input type="text" id="f-lieu" placeholder="Ex : Foot Locker Paris Châtelet"></div>
+      <div class="field"><label>Adresse complète</label><input type="text" id="f-adresse" placeholder="Ex : 1 Rue Pierre Lescot, 75001 Paris"></div>
+      <div class="field"><label>Nombre de places maximum</label><input type="number" class="form-input" id="f-places" min="1" max="30" value="8" style="width:120px"></div>
+      <button class="btn-add" id="btn-add-formation" onclick="addFormation()">Créer le créneau</button>
+    </div>
+
+    <div class="card">
+      <div class="admin-section-title">📋 Réservations reçues</div>
+      <div id="admin-resa-list"></div>
+    </div>
+    <div class="card">
+      <div class="admin-section-title">📅 Tous les créneaux</div>
+      <div id="admin-slots-list"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const ADMIN_PW = 'Leolola00@';
+const BIN_ID   = '6ab372c4ffd5d160532590bf';
+const API_KEY  = '$2a$10$/wqac7Kybp6j45.n4Dvfx.Bkymz64ivOH2KZP6tYsqSaY1vslGwiC';
+const API_URL  = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+let db = { formations: [], nextId: 1 };
+let adminUnlocked = false;
+let isSaving = false;
+
+/* ── Réseau ── */
+async function fetchDB(){
+  const r = await fetch(API_URL + '/latest', {
+    headers: { 'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false' }
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const json = await r.json();
+  // JSONBin renvoie soit {record:{…}} soit directement {formations:[…]}
+  db = json.record || json;
+}
+
+async function pushDB(){
+  if (isSaving) return false;
+  isSaving = true;
+  try {
+    const r = await fetch(API_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+      body: JSON.stringify(db)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    isSaving = false;
+    return true;
+  } catch(e) {
+    console.error('Sauvegarde échouée', e);
+    isSaving = false;
+    return false;
+  }
+}
+
+/* ── Navigation ── */
+function switchTab(tab, btn){
+  if (tab === 'admin' && !adminUnlocked){
+    document.getElementById('pw-overlay').style.display = 'flex';
+    document.getElementById('pw-input').focus();
+    return;
+  }
+  activateTab(tab, btn);
+}
+
+function checkPw(){
+  if (document.getElementById('pw-input').value === ADMIN_PW){
+    adminUnlocked = true;
+    document.getElementById('pw-overlay').style.display = 'none';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-err').textContent = '';
+    activateTab('admin', document.querySelectorAll('.tab-btn')[1]);
+  } else {
+    document.getElementById('pw-err').textContent = 'Mot de passe incorrect.';
+  }
+}
+
+function activateTab(tab, btn){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-directeur').style.display = tab === 'directeur' ? 'block' : 'none';
+  document.getElementById('view-admin').style.display     = tab === 'admin'      ? 'block' : 'none';
+  if (tab === 'directeur') loadDirecteur();
+  if (tab === 'admin')     loadAdmin();
+}
+
+/* ── Vue Directeur ── */
+async function loadDirecteur(){
+  setSlots('<div class="empty"><span class="empty-icon">⏳</span><p>Chargement…</p></div>');
+  try {
+    await fetchDB();
+    renderSlots();
+  } catch(e) {
+    setSlots('<div class="empty"><span class="empty-icon">⚠️</span><p>Impossible de charger les formations.<br>Vérifiez votre connexion et rafraîchissez.</p></div>');
+  }
+}
+
+function setSlots(html){ document.getElementById('slots-list').innerHTML = html; }
+
+function placesLeft(f){ return f.places - f.reservations.reduce((s,r) => s + r.nb, 0); }
+
+function fmtDate(d){
+  return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function badgeHtml(left, total){
+  if (left === 0) return '<span class="badge red">Complet</span>';
+  const pct = left / total;
+  if (pct <= 0.35) return '<span class="badge amber">⚠ ' + left + ' place' + (left>1?'s':'') + ' restante' + (left>1?'s':'') + '</span>';
+  return '<span class="badge green">✓ ' + left + ' place' + (left>1?'s':'') + ' dispo</span>';
+}
+
+function progressColor(pct){
+  if (pct >= 1) return '#dc2626';
+  if (pct >= 0.65) return '#d97706';
+  return '#16a34a';
+}
+
+function renderSlots(){
+  const sorted = [...db.formations].sort((a,b) => a.date.localeCompare(b.date));
+  if (!sorted.length){
+    setSlots('<div class="empty"><span class="empty-icon">📅</span><p>Aucune formation programmée pour l\'instant.</p></div>');
+    return;
+  }
+  setSlots(sorted.map(f => {
+    const left  = placesLeft(f);
+    const taken = f.places - left;
+    const pct   = taken / f.places;
+    return `<div class="card">
+      <div class="card-header">
+        <div class="formation-title">${f.lieu}</div>
+        <span class="formation-type-tag">${f.type}</span>
+      </div>
+      <div class="meta-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ${fmtDate(f.date)} à ${f.heure}
+      </div>
+      <div class="meta-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${f.adresse}
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(pct*100)}%;background:${progressColor(pct)}"></div></div>
+        <div class="progress-info">
+          <span>${taken} place${taken>1?'s':''} réservée${taken>1?'s':''}</span>
+          ${badgeHtml(left, f.places)}
+        </div>
+      </div>
+      ${(function(){
+        var selDir = document.getElementById('dir-name') ? document.getElementById('dir-name').value : '';
+        var exist = selDir ? f.reservations.find(function(r){ return r.directeur === selDir; }) : null;
+        if (exist) {
+          var maxMod = f.places - (f.reservations.reduce(function(s,r){return s+r.nb;},0) - exist.nb);
+          return '<div class="resa-row" style="background:#f0fdf4;border-radius:8px;padding:10px;margin-top:12px;border:1px solid #bbf7d0">' +
+            '<span class="nb-label" style="color:#16a34a">✓ Ma réservation :</span>' +
+            '<input type="number" min="1" max="' + maxMod + '" value="' + exist.nb + '" id="nb-' + f.id + '">' +
+            '<button class="btn-reserver" id="btn-' + f.id + '" onclick="reserver(' + f.id + ')" style="background:#16a34a">Modifier</button>' +
+            '</div>';
+        }
+        if (left > 0) {
+          return '<div class="resa-row">' +
+            '<span class="nb-label">Nb de places :</span>' +
+            '<input type="number" min="1" max="' + left + '" value="1" id="nb-' + f.id + '">' +
+            '<button class="btn-reserver" id="btn-' + f.id + '" onclick="reserver(' + f.id + ')">Réserver</button>' +
+            '</div>';
+        }
+        return '<div class="complet-msg">🔒 Cette formation est complète.</div>';
+      })()}
+    </div>`;
+  }).join(''));
+}
+
+async function reserver(id){
+  const dir = document.getElementById('dir-name').value;
+  if (!dir){ showNotif('dir', 'Sélectionnez votre district avant de réserver.', 'error'); return; }
+
+  const btn = document.getElementById('btn-' + id);
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ Envoi…'; }
+
+  try {
+    await fetchDB();
+  } catch(e) {
+    showNotif('dir', '❌ Erreur réseau. Vérifiez votre connexion.', 'error');
+    if (btn){ btn.disabled = false; btn.textContent = 'Réserver'; }
+    return;
+  }
+
+  const f = db.formations.find(x => x.id === id);
+  if (!f){ showNotif('dir', 'Créneau introuvable.', 'error'); if(btn){btn.disabled=false;btn.textContent='Réserver';} return; }
+
+  const nb = parseInt(document.getElementById('nb-' + id)?.value) || 1;
+  const exist = f.reservations.find(r => r.directeur === dir);
+
+  if (exist) {
+    // Modification : recalcul des places disponibles en excluant la résa existante
+    const leftSansExist = f.places - (f.reservations.reduce((s,r) => s + r.nb, 0) - exist.nb);
+    if (nb < 1 || nb > leftSansExist){
+      showNotif('dir', 'Nombre invalide (max : ' + leftSansExist + ').', 'error');
+      if(btn){btn.disabled=false;btn.textContent='Modifier';} return;
+    }
+    const oldNb = exist.nb;
+    exist.nb = nb;
+    exist.at = new Date().toISOString();
+    const ok = await pushDB();
+    if (ok){
+      renderSlots();
+      showNotif('dir', '✓ Réservation modifiée : ' + nb + ' place' + (nb>1?'s':'') + ' pour ' + dir, 'success');
+    } else {
+      exist.nb = oldNb;
+      showNotif('dir', '❌ Sauvegarde échouée. Réessayez.', 'error');
+      if(btn){btn.disabled=false;btn.textContent='Modifier';}
+    }
+  } else {
+    // Nouvelle réservation
+    const left = placesLeft(f);
+    if (nb < 1 || nb > left){
+      showNotif('dir', 'Nombre invalide (max : ' + left + ').', 'error');
+      if(btn){btn.disabled=false;btn.textContent='Réserver';} return;
+    }
+    f.reservations.push({ directeur: dir, nb, at: new Date().toISOString() });
+    const ok = await pushDB();
+    if (ok){
+      renderSlots();
+      showNotif('dir', '✓ ' + nb + ' place' + (nb>1?'s':'') + ' réservée' + (nb>1?'s':'') + ' pour ' + dir + ' — ' + f.lieu, 'success');
+    } else {
+      f.reservations.pop();
+      showNotif('dir', '❌ Sauvegarde échouée. Réessayez.', 'error');
+      if(btn){btn.disabled=false;btn.textContent='Réserver';}
+    }
+  }
+}
+
+/* ── Vue Admin ── */
+async function loadAdmin(){
+  setShareLink();
+  document.getElementById('admin-resa-list').innerHTML  = '<div class="empty" style="padding:1rem 0"><p>Chargement…</p></div>';
+  document.getElementById('admin-slots-list').innerHTML = '';
+  try { await fetchDB(); } catch(e) {}
+  renderAdmin();
+}
+
+function setShareLink(){
+  document.getElementById('share-link').textContent = window.location.href.split('?')[0];
+}
+
+function copyLink(){
+  navigator.clipboard.writeText(window.location.href.split('?')[0]).then(() => {
+    const b = document.querySelector('.btn-copy');
+    b.textContent = 'Copié ✓';
+    setTimeout(() => b.textContent = 'Copier', 2000);
+  });
+}
+
+async function addFormation(){
+  const type    = document.getElementById('f-type').value;
+  const date    = document.getElementById('f-date').value;
+  const heure   = document.getElementById('f-time').value;
+  const lieu    = document.getElementById('f-lieu').value.trim();
+  const adresse = document.getElementById('f-adresse').value.trim();
+  const places  = parseInt(document.getElementById('f-places').value) || 8;
+  if (!date || !lieu){ showNotif('admin', 'Date et lieu obligatoires.', 'error'); return; }
+
+  const btn = document.getElementById('btn-add-formation');
+  btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
+
+  db.formations.push({ id: db.nextId++, type, date, heure, lieu, adresse, places, reservations: [] });
+  const ok = await pushDB();
+  btn.disabled = false; btn.textContent = 'Créer le créneau';
+
+  if (ok){
+    renderAdmin();
+    showNotif('admin', '✓ Créneau créé.', 'success');
+    document.getElementById('f-lieu').value = '';
+    document.getElementById('f-adresse').value = '';
+    document.getElementById('f-date').value = '';
+  } else {
+    db.formations.pop(); db.nextId--;
+    showNotif('admin', '❌ Erreur de sauvegarde.', 'error');
+  }
+}
+
+async function deleteFormation(id){
+  if (!confirm('Supprimer ce créneau et toutes ses réservations ?')) return;
+  const prev = [...db.formations];
+  db.formations = db.formations.filter(f => f.id !== id);
+  const ok = await pushDB();
+  if (ok){ renderAdmin(); }
+  else { db.formations = prev; showNotif('admin', '❌ Erreur de suppression.', 'error'); }
+}
+
+function renderAdmin(){
+  const resaEl  = document.getElementById('admin-resa-list');
+  const slotsEl = document.getElementById('admin-slots-list');
+
+  const allResa = [];
+  db.formations.forEach(f => f.reservations.forEach(r => allResa.push({...r, formationType:f.type, lieu:f.lieu, dateF:f.date, heure:f.heure})));
+
+  resaEl.innerHTML = allResa.length ? allResa.map(r => `
+    <div class="resa-admin-item">
+      <div>
+        <div class="resa-admin-name">${r.directeur}</div>
+        <div class="resa-admin-meta">${r.formationType} · ${fmtDate(r.dateF)} à ${r.heure}</div>
+        <div class="resa-admin-meta">📍 ${r.lieu}</div>
+      </div>
+      <span class="badge green">${r.nb} place${r.nb>1?'s':''}</span>
+    </div>`).join('') :
+    '<div class="empty" style="padding:1.5rem 0"><p style="color:var(--gray-400)">Aucune réservation reçue.</p></div>';
+
+  const sorted = [...db.formations].sort((a,b) => a.date.localeCompare(b.date));
+  slotsEl.innerHTML = sorted.length ? sorted.map(f => {
+    const taken = f.places - placesLeft(f);
+    return `<div class="resa-admin-item">
+      <div>
+        <div class="resa-admin-name">${f.lieu}</div>
+        <div class="resa-admin-meta">${f.type} · ${fmtDate(f.date)} à ${f.heure}</div>
+        <div class="resa-admin-meta">${taken}/${f.places} places · ${f.adresse}</div>
+      </div>
+      <button class="btn-del" onclick="deleteFormation(${f.id})">Supprimer</button>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:1rem 0"><p style="color:var(--gray-400)">Aucun créneau créé.</p></div>';
+}
+
+function showNotif(ctx, msg, type){
+  const el = document.getElementById('notif-' + ctx);
+  el.textContent = msg;
+  el.className = 'notif show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+// Démarrage
+loadDirecteur();
+</script>
+</body>
+</html>
