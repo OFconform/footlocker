@@ -193,7 +193,7 @@ let isSaving = false;
 
 /* ── Réseau Firebase ── */
 async function fetchDB(){
-  const r = await fetch(FB_URL + '/data.json');
+  const r = await fetch(FB_URL + '/.json');
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const json = await r.json();
   if (json) db = json;
@@ -203,7 +203,7 @@ async function pushDB(){
   if (isSaving) return false;
   isSaving = true;
   try {
-    const r = await fetch(FB_URL + '/data.json', {
+    const r = await fetch(FB_URL + '/.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(db)
