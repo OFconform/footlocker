@@ -359,44 +359,25 @@ async function reserver(id){
   if (!f){ showNotif('dir', 'Créneau introuvable.', 'error'); if(btn){btn.disabled=false;btn.textContent='Réserver';} return; }
 
   const nb = parseInt(document.getElementById('nb-' + id)?.value) || 1;
-  const exist = f.reservations.find(r => r.directeur === dir);
+  const left = placesLeft(f);
 
-  if (exist) {
-    // Modification : recalcul des places disponibles en excluant la résa existante
-    const leftSansExist = f.places - (f.reservations.reduce((s,r) => s + r.nb, 0) - exist.nb);
-    if (nb < 1 || nb > leftSansExist){
-      showNotif('dir', 'Nombre invalide (max : ' + leftSansExist + ').', 'error');
-      if(btn){btn.disabled=false;btn.textContent='Modifier';} return;
-    }
-    const oldNb = exist.nb;
-    exist.nb = nb;
-    exist.at = new Date().toISOString();
-    const ok = await pushDB();
-    if (ok){
-      renderSlots();
-      showNotif('dir', '✓ Réservation modifiée : ' + nb + ' place' + (nb>1?'s':'') + ' pour ' + dir, 'success');
-    } else {
-      exist.nb = oldNb;
-      showNotif('dir', '❌ Sauvegarde échouée. Réessayez.', 'error');
-      if(btn){btn.disabled=false;btn.textContent='Modifier';}
-    }
+  if (nb < 1 || nb > left){
+    showNotif('dir', 'Nombre invalide (max disponible : ' + left + ').', 'error');
+    if(btn){btn.disabled=false;btn.textContent='Réserver';} return;
+  }
+
+  // Toujours ajouter une nouvelle réservation (cumul possible)
+  f.reservations.push({ directeur: dir, nb, at: new Date().toISOString() });
+  const ok = await pushDB();
+  if (ok){
+    renderSlots();
+    // Calcul du total réservé par ce district sur ce créneau
+    const total = f.reservations.filter(r => r.directeur === dir).reduce((s,r) => s+r.nb, 0);
+    showNotif('dir', '✓ ' + nb + ' place' + (nb>1?'s':'') + ' ajoutée' + (nb>1?'s':'') + ' pour ' + dir + ' (total : ' + total + ' place' + (total>1?'s':'') + ')', 'success');
   } else {
-    // Nouvelle réservation
-    const left = placesLeft(f);
-    if (nb < 1 || nb > left){
-      showNotif('dir', 'Nombre invalide (max : ' + left + ').', 'error');
-      if(btn){btn.disabled=false;btn.textContent='Réserver';} return;
-    }
-    f.reservations.push({ directeur: dir, nb, at: new Date().toISOString() });
-    const ok = await pushDB();
-    if (ok){
-      renderSlots();
-      showNotif('dir', '✓ ' + nb + ' place' + (nb>1?'s':'') + ' réservée' + (nb>1?'s':'') + ' pour ' + dir + ' — ' + f.lieu, 'success');
-    } else {
-      f.reservations.pop();
-      showNotif('dir', '❌ Sauvegarde échouée. Réessayez.', 'error');
-      if(btn){btn.disabled=false;btn.textContent='Réserver';}
-    }
+    f.reservations.pop();
+    showNotif('dir', '❌ Sauvegarde échouée. Réessayez.', 'error');
+    if(btn){btn.disabled=false;btn.textContent='Réserver';}
   }
 }
 
